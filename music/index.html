@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>music</title>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="initial-scale=1.0, width=device-width, user-scalable=no" />
+	<link rel="stylesheet" type="text/css" href="css/music.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<!-- 引入vue -->
+	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+	<!-- 定义rem：屏宽超过640px，font-size恒为100px，屏宽低于640px，font-size为100*（屏宽/640），则大于640px，1rem大小固定，小于640px，rem可以自适应不用设备 -->
+	<script type="text/javascript">
+		(function (doc, win) {
+        var docEl = doc.documentElement,
+            resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
+            recalc = function () {
+                var clientWidth = docEl.clientWidth;
+                if (!clientWidth) return;
+                if(clientWidth>=640){
+                    docEl.style.fontSize = '100px';
+                }else{
+                    docEl.style.fontSize = 100 * (clientWidth / 640) + 'px';
+                }
+            };
+        if (!doc.addEventListener) return;
+        win.addEventListener(resizeEvt, recalc, false);
+        doc.addEventListener('DOMContentLoaded', recalc, false);
+    	})(document, window);
+	</script>
+</head>
+<body><canvas id="world"></canvas>
+<div id="app">
+	
+	<!-- 顶部 -->
+	<div class="header">♪ 聆听最动听的声音 ♪</div>
+	<!-- 轮播图 -->
+	<div class="pic">
+		<div id="box" class="box">
+			<!-- 图片 -->
+			<ul id="banner" class="banner">
+				<li><img class="auto-img" src="img/4.jpg"></li>
+				<li><img class="auto-img" src="img/1.jpg"></li>
+				<li><img class="auto-img" src="img/2.jpg"></li>
+				<li><img class="auto-img" src="img/3.jpg"></li>
+				<li><img class="auto-img" src="img/4.jpg"></li>
+			</ul>
+			<!-- 圆点 -->
+			<ul id="index" class="index">
+				<li class="active" name='1'></li>
+				<li name='2'></li>
+				<li name='3'></li>
+				<li name='4'></li>
+			</ul>
+			<!-- 箭头 -->
+			<span id="prev" class="arrow a-left icon-circle-left"></span>
+			<span id="next" class="arrow a-right icon-circle-right"></span>
+		</div>	
+	</div>
+	<!-- 舞台 -->
+	<div class="music">
+		<!-- 播放器 -->
+		<audio id="audio" :src="url" loop="" autoplay="">
+		</audio>
+		<div class="music-player">
+			<div class="music-head">MUSIC
+				<!-- 列表（pc隐藏） -->
+				<span class="icon-menu menu" @click='showList'></span>
+			</div>
+			<div class="music-body">
+				<!-- 罩层 -->
+				<div name="drawer" @click="showList">
+				    <div v-show="show" class="drawer">
+				        <ul>
+				        	<li class="chapter" v-for='(music,index) in music' :key='index' @click='playthis(index,music)'>
+				            	<div class="b-song">
+									<div class="b-pic"><img :src="music.pic"></div>
+									<div class="b-mes">
+										<div class="b-name">{{music.name}}</div>
+										<div class="b-author">{{music.singer}}</div>
+									</div>
+								</div>
+				            </li>
+				        </ul>
+				    </div>					
+				</div>
+
+			    <div name="fade">
+			        <div class="bg" v-show="show" @click="showList"></div>
+			    </div>
+				<!-- 封面250 -->
+				<div class="cover">
+					<div :class="rotate?'rotate img-box':'img-box'">
+						<img :src="pic" id="music-img" alt="">
+					</div>
+				</div>
+				<!-- 信息100 -->
+				<div class="information">
+					<span class="song">{{name}}</span>
+					<span class="singer">{{singer}}</span>
+				</div>
+				<!-- 歌词（pc隐藏） -->
+				<div class="m-lyric">{{ly0}}</div>
+				<!-- 进度50 -->
+				<div class="progress">
+					<span id="progress-bar" @click='playing'>
+						<span id="load-bar"></span>
+						<span id="played-bar"></span>
+					</span>
+					<div id="time">
+						<span id="current-time">0s</span>
+						<span id="total-time">{{time}}s</span>
+					</div>
+				</div>
+				<!-- 控制50 -->
+				<div class="control">
+					<span id="mode" @click='change'>单曲</span>
+					<div class="voice-box">
+						<span ref='abc' class="icon-volume-medium voice"></span>
+						<span id="voice-bar" @click='voice'>
+							<span id="voiced-bar"></span>
+						</span>
+					</div>
+					
+				</div>
+				<!-- 控件80 -->
+				<div class="button">
+					<span @click='last(music)' class="icon-backward2 left"></span>
+					<span @click='play' >
+						<span class="icon-play3 play" v-show="icon"></span>
+						<span class="icon-pause2 play" v-show="!icon"></span>
+					</span>
+					<span @click='next(music)' class="icon-forward3 right"></span>
+				</div>
+			</div>
+		</div>
+		<!-- 列表 -->
+		<div class="music-list">
+			<div class="music-head">LIST</div>
+			<div class="music-body list-box" style="height: 5.3rem;">
+				<ul>
+					<li v-for='(music,index) in music' :key=index @click='playthis(index,music)'>
+						<div class="a-song">
+							<div class="a-pic"><img :src="music.pic"></div>
+							<div class="a-mes">
+								<div class="a-name">{{music.name}}</div>
+								<div class="a-author">{{music.singer}}</div>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<!-- 歌词 -->
+		<div class="music-lyric">
+			<div class="music-head">LYRIC</div>
+			<div class="music-body lyric-box" style="height: 5.3rem;">
+				<div class="lyric"><!-- {{lyric}} -->
+					<div class="lynow ly2">{{ly2}}</div>
+					<div class="lynow ly1">{{ly1}}</div>
+					<div class="lynow ly0">{{ly0}}</div>
+					<!-- <div class="lynow ly3">{{ly3}}</div>
+					<div class="lynow ly4">{{ly4}}</div> -->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 底部 -->
+	<div class="footer">锦城丝管日纷纷，半入江风半入云。此曲只应天上有，人间能得几回闻。——杜甫</div>	
+</div>	
+
+	<script type="text/javascript" src="js/banner.js"></script>
+	<!-- <script type="text/javascript" src="js/vue.js"></script> -->
+	<script type="text/javascript" src="js/music.js"></script>
+	<!-- <script type="text/javascript" src="js/bg.js"></script>	 -->
+</body>
+</html>
